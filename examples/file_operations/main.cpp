@@ -18,7 +18,7 @@ void DemonstrateBasicFileOperations() {
     auto temp_dir = std::filesystem::temp_directory_path() / "vision_infra_file_demo";
     std::filesystem::create_directories(temp_dir);
     
-    logger->Info("Created temporary directory: " + temp_dir.string());
+    logger->Log(LogLevel::INFO, "Created temporary directory: " + temp_dir.string());
     
     std::cout << "1. Directory operations:\n";
     
@@ -126,7 +126,7 @@ void DemonstrateBasicFileOperations() {
         std::cout << "   × Delete failed: " << e.what() << "\n";
     }
     
-    logger->Info("Basic file operations completed");
+    logger->Log(LogLevel::INFO, "Basic file operations completed");
 }
 
 void DemonstrateImageFileOperations() {
@@ -219,7 +219,7 @@ void DemonstrateImageFileOperations() {
             std::cout << "       Type: " << type_str << " (" << loaded_image.channels() << " channels)\n";
             std::cout << "       File size: " << file_size << " bytes\n";
             std::cout << "       Compression ratio: " << std::fixed << std::setprecision(1)
-                      << static_cast<double>(loaded_image.total() * loaded_image.elemSize()) / file_size << "x\n";
+                      << static_cast<double>(loaded_image.total() * loaded_image.elemSize()) / static_cast<double>(file_size) << "x\n";
         } else {
             std::cout << "   × Failed to load " << filename << "\n";
         }
@@ -254,7 +254,7 @@ void DemonstrateImageFileOperations() {
         }
     }
     
-    logger->Info("Image file operations completed");
+    logger->Log(LogLevel::INFO, "Image file operations completed");
 }
 
 void DemonstrateConfigurationFileHandling() {
@@ -404,7 +404,7 @@ void DemonstrateConfigurationFileHandling() {
         std::cout << "   " << (exists ? "✓" : "×") << " " << config_file;
         if (exists) {
             auto size = std::filesystem::file_size(config_path);
-            auto modified_time = std::filesystem::last_write_time(config_path);
+            // auto modified_time = std::filesystem::last_write_time(config_path);
             
             // Convert file time to system time (C++20 feature, may not be available)
             std::cout << " (" << size << " bytes)";
@@ -417,7 +417,7 @@ void DemonstrateConfigurationFileHandling() {
     std::cout << "\n   Configuration validation: " 
               << (all_configs_present ? "PASSED" : "FAILED") << "\n";
     
-    logger->Info("Configuration file handling completed");
+    logger->Log(LogLevel::INFO, "Configuration file handling completed");
 }
 
 void DemonstrateLogFileManagement() {
@@ -433,7 +433,7 @@ void DemonstrateLogFileManagement() {
     
     // Simulate application logs over several days
     auto now = std::chrono::system_clock::now();
-    auto time_t_now = std::chrono::system_clock::to_time_t(now);
+    // auto time_t_now = std::chrono::system_clock::to_time_t(now);
     
     std::vector<std::pair<std::string, int>> log_configs = {
         {"application.log", 0},      // Today
@@ -540,7 +540,7 @@ void DemonstrateLogFileManagement() {
     }
     
     auto logger = LoggerManager::GetLogger("log_mgmt");
-    logger->Info("Log file management completed");
+    logger->Log(LogLevel::INFO, "Log file management completed");
 }
 
 void DemonstrateFileSystemMonitoring() {
@@ -576,11 +576,11 @@ void DemonstrateFileSystemMonitoring() {
     std::cout << "   Total directories: " << dir_count << "\n";
     std::cout << "   Total files: " << file_count << "\n";
     std::cout << "   Total size: " << total_size << " bytes (" 
-              << std::fixed << std::setprecision(2) << total_size / 1024.0 << " KB)\n";
+              << std::fixed << std::setprecision(2) << static_cast<double>(total_size) / 1024.0 << " KB)\n";
     
     std::cout << "\n2. File type distribution:\n";
     for (const auto& [extension, size] : size_by_extension) {
-        double percentage = static_cast<double>(size) / total_size * 100.0;
+        double percentage = static_cast<double>(size) / static_cast<double>(total_size) * 100.0;
         std::cout << "   " << std::setw(15) << extension << ": " 
                   << std::setw(8) << size << " bytes (" 
                   << std::fixed << std::setprecision(1) << percentage << "%)\n";
@@ -602,9 +602,9 @@ void DemonstrateFileSystemMonitoring() {
     
     int files_to_show = std::min(5, static_cast<int>(file_sizes.size()));
     for (int i = 0; i < files_to_show; ++i) {
-        auto relative_path = std::filesystem::relative(file_sizes[i].first, base_dir);
+        auto relative_path = std::filesystem::relative(file_sizes[static_cast<size_t>(i)].first, base_dir);
         std::cout << "   " << (i + 1) << ". " << relative_path.string() 
-                  << " (" << file_sizes[i].second << " bytes)\n";
+                  << " (" << file_sizes[static_cast<size_t>(i)].second << " bytes)\n";
     }
     
     std::cout << "\n4. Directory permissions and access:\n";
@@ -655,7 +655,7 @@ void DemonstrateFileSystemMonitoring() {
         std::cout << "   × Cleanup failed: " << e.what() << "\n";
     }
     
-    logger->Info("File system monitoring completed");
+    logger->Log(LogLevel::INFO, "File system monitoring completed");
 }
 
 int main() {
@@ -664,7 +664,7 @@ int main() {
     try {
         auto main_logger = LoggerManager::GetLogger("main");
         main_logger->SetLevel(LogLevel::INFO);
-        main_logger->Info("File operations demo started");
+        main_logger->Log(LogLevel::INFO, "File operations demo started");
         
         // Run all demonstrations
         DemonstrateBasicFileOperations();
@@ -682,7 +682,7 @@ int main() {
         
         std::cout << "File operations demo completed successfully!\n";
         
-        main_logger->Info("Demo completed successfully");
+        main_logger->Log(LogLevel::INFO, "Demo completed successfully");
         
     } catch (const std::exception& e) {
         std::cerr << "Error during file operations demo: " << e.what() << "\n";

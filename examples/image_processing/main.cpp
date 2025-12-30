@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <vector>
 #include <chrono>
+#include <thread>
 #include <vision-infra/utils/VisionUtils.hpp>
 #include <vision-infra/core/Logger.hpp>
 #include <opencv2/opencv.hpp>
@@ -45,8 +46,8 @@ void DemonstrateStringUtilities() {
     std::string file_list = "image1.jpg,image2.png,image3.tiff,image4.bmp";
     auto files = StringUtils::Split(file_list, ',');
     
-    logger->Info("Original string: " + file_list);
-    logger->Info("Split into " + std::to_string(files.size()) + " parts:");
+    logger->Log(LogLevel::INFO, "Original string: " + file_list);
+    logger->Log(LogLevel::INFO, "Split into " + std::to_string(files.size()) + " parts:");
     for (size_t i = 0; i < files.size(); ++i) {
         std::cout << "   [" << i << "] " << files[i] << "\n";
     }
@@ -54,7 +55,7 @@ void DemonstrateStringUtilities() {
     // Demonstrate string joining
     std::vector<std::string> labels = {"person", "car", "bicycle", "dog", "cat"};
     std::string joined = StringUtils::Join(labels, " | ");
-    logger->Info("Joined labels: " + joined);
+    logger->Log(LogLevel::INFO, "Joined labels: " + joined);
     
     std::cout << "\n2. String transformations:\n";
     
@@ -94,8 +95,8 @@ void DemonstrateInputParsing() {
     std::string input_sizes_str = "1,3,224,224;1,3,256,256;1,1,512,512";
     auto input_sizes = InputParser::ParseInputSizes(input_sizes_str);
     
-    logger->Info("Input sizes string: " + input_sizes_str);
-    logger->Info("Parsed " + std::to_string(input_sizes.size()) + " input size configurations:");
+    logger->Log(LogLevel::INFO, "Input sizes string: " + input_sizes_str);
+    logger->Log(LogLevel::INFO, "Parsed " + std::to_string(input_sizes.size()) + " input size configurations:");
     
     for (size_t i = 0; i < input_sizes.size(); ++i) {
         std::cout << "   Input " << i << ": [";
@@ -162,13 +163,13 @@ void DemonstrateImageUtilities(const std::filesystem::path& output_dir) {
     
     // Create test image
     cv::Mat original_image = CreateTestImage(cv::Size(480, 360));
-    logger->Info("Created test image: " + std::to_string(original_image.cols) + "x" + 
+    logger->Log(LogLevel::INFO, "Created test image: " + std::to_string(original_image.cols) + "x" + 
                 std::to_string(original_image.rows));
     
     // Save original
     auto original_path = output_dir / "01_original.jpg";
     cv::imwrite(original_path.string(), original_image);
-    logger->Info("Saved original image: " + original_path.string());
+    logger->Log(LogLevel::INFO, "Saved original image: " + original_path.string());
     
     std::cout << "\n2. Resize keeping aspect ratio:\n";
     
@@ -227,7 +228,7 @@ void DemonstrateImageUtilities(const std::filesystem::path& output_dir) {
         cv::split(normalized, channels);
         
         // Reverse normalization: pixel = (normalized * std) + mean
-        channels[c] = (channels[c] * imagenet_std[c]) + imagenet_mean[c];
+        channels[static_cast<size_t>(c)] = (channels[static_cast<size_t>(c)] * imagenet_std[static_cast<size_t>(c)]) + imagenet_mean[static_cast<size_t>(c)];
         cv::merge(channels, denormalized);
     }
     denormalized.convertTo(denormalized, CV_8U, 255.0);
@@ -266,7 +267,7 @@ void DemonstrateDrawingUtilities(const std::filesystem::path& output_dir) {
     std::cout << "1. Generating random colors:\n";
     
     auto colors = DrawingUtils::GenerateRandomColors(10, 42); // Fixed seed for consistency
-    logger->Info("Generated " + std::to_string(colors.size()) + " random colors");
+    logger->Log(LogLevel::INFO, "Generated " + std::to_string(colors.size()) + " random colors");
     
     for (size_t i = 0; i < colors.size(); ++i) {
         std::cout << "   Color " << i << ": RGB(" 
@@ -351,7 +352,7 @@ void DemonstrateDrawingUtilities(const std::filesystem::path& output_dir) {
     // Save the annotated canvas
     auto canvas_path = output_dir / "06_drawing_demo.jpg";
     cv::imwrite(canvas_path.string(), canvas);
-    logger->Info("Saved drawing demo: " + canvas_path.string());
+    logger->Log(LogLevel::INFO, "Saved drawing demo: " + canvas_path.string());
     
     std::cout << "\n";
 }
@@ -385,7 +386,7 @@ void DemonstratePerformanceUtils() {
     std::cout << "   Image processing completed in " << elapsed_ms << " ms (" 
               << elapsed_sec << " seconds)\n";
     
-    logger->Info("Processing time: " + std::to_string(elapsed_ms) + " ms");
+    logger->Log(LogLevel::INFO, "Processing time: " + std::to_string(elapsed_ms) + " ms");
     
     std::cout << "\n2. FPS measurement:\n";
     
@@ -440,9 +441,9 @@ void DemonstratePerformanceUtils() {
                 break;
             case 2: // Edge detection
                 {
-                    cv::Mat gray, edges;
+                    cv::Mat gray, edge_result;
                     cv::cvtColor(work_image, gray, cv::COLOR_BGR2GRAY);
-                    cv::Canny(gray, edges, 50, 150);
+                    cv::Canny(gray, edge_result, 50, 150);
                 }
                 break;
             case 3: // Resize operation
@@ -517,12 +518,12 @@ void DemonstrateMemoryUtils() {
         std::cout << "   System memory usage: " << MemoryUtils::FormatBytes(system_memory) << "\n";
         std::cout << "   Process memory usage: " << MemoryUtils::FormatBytes(process_memory) << "\n";
         
-        double memory_percentage = (static_cast<double>(process_memory) / system_memory) * 100.0;
+        double memory_percentage = (static_cast<double>(process_memory) / static_cast<double>(system_memory)) * 100.0;
         std::cout << "   Process memory percentage: " << std::fixed << std::setprecision(2) 
                   << memory_percentage << "%\n";
         
     } catch (const std::exception& e) {
-        logger->Warn("Could not retrieve memory information: " + std::string(e.what()));
+        logger->Log(LogLevel::WARN, "Could not retrieve memory information: " + std::string(e.what()));
     }
     
     std::cout << "\n4. Memory formatting examples:\n";
@@ -544,7 +545,7 @@ void DemonstrateMemoryUtils() {
     std::cout << "\n";
 }
 
-int main(int argc, char* argv[]) {
+int main(int /*argc*/, char* /*argv*/[]) {
     std::cout << "=== Vision Infrastructure Image Processing Demo ===\n\n";
     
     try {
@@ -554,7 +555,7 @@ int main(int argc, char* argv[]) {
         
         auto logger = LoggerManager::GetLogger("main");
         logger->SetLevel(LogLevel::INFO);
-        logger->Info("Demo started, output directory: " + output_dir.string());
+        logger->Log(LogLevel::INFO, "Demo started, output directory: " + output_dir.string());
         
         // Run all demonstrations
         DemonstrateStringUtilities();
@@ -575,7 +576,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Output images saved to: " << output_dir << "\n";
         std::cout << "Image processing demo completed successfully!\n";
         
-        logger->Info("Demo completed successfully");
+        logger->Log(LogLevel::INFO, "Demo completed successfully");
         
     } catch (const std::exception& e) {
         std::cerr << "Error during image processing demo: " << e.what() << "\n";

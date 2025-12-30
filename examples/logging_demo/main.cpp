@@ -2,6 +2,7 @@
 #include <thread>
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <vision-infra/core/Logger.hpp>
 
 using namespace vision_infra::core;
@@ -9,31 +10,31 @@ using namespace vision_infra::core;
 void DemonstrateBasicLogging() {
     std::cout << "=== Basic Logging Demo ===\n\n";
     
-    // Create a named logger
-    Logger logger("demo_logger");
+    // Create a named logger using LoggerManager
+    auto logger = LoggerManager::GetLogger("demo_logger");
     
     std::cout << "1. Demonstrating different log levels:\n";
     
     // Test all log levels
-    logger.SetLevel(LogLevel::TRACE);
-    logger.Trace("This is a trace message - very detailed debugging info");
-    logger.Debug("This is a debug message - general debugging info");
-    logger.Info("This is an info message - general information");
-    logger.Warn("This is a warning message - something noteworthy happened");
-    logger.Error("This is an error message - something went wrong but recoverable");
-    logger.Fatal("This is a fatal message - critical system failure");
+    logger->SetLevel(LogLevel::TRACE);
+    logger->Log(LogLevel::TRACE, "This is a trace message - very detailed debugging info");
+    logger->Log(LogLevel::DEBUG, "This is a debug message - general debugging info");
+    logger->Log(LogLevel::INFO, "This is an info message - general information");
+    logger->Log(LogLevel::WARN, "This is a warning message - something noteworthy happened");
+    logger->Log(LogLevel::ERROR, "This is an error message - something went wrong but recoverable");
+    logger->Log(LogLevel::FATAL, "This is a fatal message - critical system failure");
     
     std::cout << "\n2. Testing log level filtering:\n";
     
     // Set higher log level to filter out trace/debug
-    logger.SetLevel(LogLevel::WARN);
+    logger->SetLevel(LogLevel::WARN);
     std::cout << "   Log level set to WARN - only WARN, ERROR, FATAL should appear:\n";
     
-    logger.Trace("This trace message should NOT appear");
-    logger.Debug("This debug message should NOT appear");
-    logger.Info("This info message should NOT appear");
-    logger.Warn("This warning message SHOULD appear");
-    logger.Error("This error message SHOULD appear");
+    logger->Log(LogLevel::TRACE, "This trace message should NOT appear");
+    logger->Log(LogLevel::DEBUG, "This debug message should NOT appear");
+    logger->Log(LogLevel::INFO, "This info message should NOT appear");
+    logger->Log(LogLevel::WARN, "This warning message SHOULD appear");
+    logger->Log(LogLevel::ERROR, "This error message SHOULD appear");
     
     std::cout << "\n";
 }
@@ -41,34 +42,36 @@ void DemonstrateBasicLogging() {
 void DemonstrateLoggerConfiguration() {
     std::cout << "=== Logger Configuration Demo ===\n\n";
     
-    Logger logger("config_demo");
+    auto logger_ptr = LoggerManager::GetLogger("config_demo");
+    // Cast to Logger to access configuration methods
+    auto logger = std::static_pointer_cast<Logger>(logger_ptr);
     
     std::cout << "1. Testing logger configuration options:\n";
     
     // Configure logger appearance
-    logger.SetLevel(LogLevel::DEBUG);
-    logger.EnableTimestamp(true);
-    logger.EnableConsoleOutput(true);
+    logger->SetLevel(LogLevel::DEBUG);
+    logger->EnableTimestamp(true);
+    logger->EnableConsoleOutput(true);
     
-    logger.Info("Logger configured with timestamps and console output");
+    logger->Log(LogLevel::INFO, "Logger configured with timestamps and console output");
     
     // Test custom pattern (if supported)
-    logger.SetPattern("[%l] %m");
-    logger.Debug("Custom pattern applied - should show level and message");
+    logger->SetPattern("[%l] %m");
+    logger->Log(LogLevel::DEBUG, "Custom pattern applied - should show level and message");
     
     // Create temporary log file
     auto temp_dir = std::filesystem::temp_directory_path();
     auto log_file = temp_dir / "vision_infra_demo.log";
     
-    logger.SetOutputFile(log_file.string());
-    logger.Info("Log output redirected to file: " + log_file.string());
+    logger->SetOutputFile(log_file.string());
+    logger->Log(LogLevel::INFO, "Log output redirected to file: " + log_file.string());
     
     std::cout << "\n2. Testing file output:\n";
-    logger.Warn("This message should appear in both console and file");
-    logger.Error("This error message is also logged to file");
+    logger->Log(LogLevel::WARN, "This message should appear in both console and file");
+    logger->Log(LogLevel::ERROR, "This error message is also logged to file");
     
     // Flush to ensure everything is written
-    logger.Flush();
+    logger->Flush();
     
     // Check if file was created and has content
     if (std::filesystem::exists(log_file)) {
@@ -155,8 +158,10 @@ void DemonstrateLoggerManager() {
 void DemonstrateFormattedLogging() {
     std::cout << "=== Formatted Logging Demo ===\n\n";
     
-    Logger logger("formatter");
-    logger.SetLevel(LogLevel::TRACE);
+    auto logger_ptr = LoggerManager::GetLogger("formatter");
+    // Cast to Logger to access convenience methods
+    auto logger = std::static_pointer_cast<Logger>(logger_ptr);
+    logger->SetLevel(LogLevel::TRACE);
     
     std::cout << "1. Demonstrating formatted logging:\n";
     
@@ -166,18 +171,18 @@ void DemonstrateFormattedLogging() {
     double processing_time = 1.234;
     int frame_count = 150;
     
-    logger.Info("User login successful: ID=" + std::to_string(user_id) + ", Username=" + username);
-    logger.Debug("Processing completed in " + std::to_string(processing_time) + " seconds");
-    logger.Info("Processed " + std::to_string(frame_count) + " frames");
+    logger->Log(LogLevel::INFO, "User login successful: ID=" + std::to_string(user_id) + ", Username=" + username);
+    logger->Log(LogLevel::DEBUG, "Processing completed in " + std::to_string(processing_time) + " seconds");
+    logger->Log(LogLevel::INFO, "Processed " + std::to_string(frame_count) + " frames");
     
     // Simulate error conditions
     std::cout << "\n2. Simulating error scenarios:\n";
     
     std::string filename = "missing_file.jpg";
-    logger.Error("Failed to load image file: " + filename);
+    logger->Log(LogLevel::ERROR, "Failed to load image file: " + filename);
     
     int error_code = 404;
-    logger.Error("HTTP request failed with code " + std::to_string(error_code));
+    logger->Log(LogLevel::ERROR, "HTTP request failed with code " + std::to_string(error_code));
     
     // Simulate performance logging
     std::cout << "\n3. Performance logging simulation:\n";
@@ -190,12 +195,12 @@ void DemonstrateFormattedLogging() {
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
     
-    logger.Info("Operation completed in " + std::to_string(duration.count()) + "ms");
+    logger->Log(LogLevel::INFO, "Operation completed in " + std::to_string(duration.count()) + "ms");
     
     // Simulate memory usage logging
     size_t memory_usage = 1024 * 1024 * 150; // 150 MB
     double memory_mb = static_cast<double>(memory_usage) / (1024.0 * 1024.0);
-    logger.Debug("Current memory usage: " + std::to_string(memory_mb) + " MB");
+    logger->Log(LogLevel::DEBUG, "Current memory usage: " + std::to_string(memory_mb) + " MB");
     
     std::cout << "\n";
 }
