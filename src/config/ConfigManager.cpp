@@ -142,7 +142,7 @@ void ConfigManager::RegisterSerializer(const std::string& extension, std::unique
     pImpl_->serializers_[extension] = std::move(serializer);
 }
 
-std::unique_ptr<ConfigManager> ConfigManager::CreateDefault() {
+std::unique_ptr<ConfigManager> ConfigManager::Create() {
     return std::make_unique<ConfigManager>(nullptr, nullptr);
 }
 
@@ -235,98 +235,25 @@ std::unique_ptr<InferenceConfig> DefaultConfigLoader::LoadFromEnvironment() {
     return config;
 }
 
-std::unique_ptr<InferenceConfig> ConfigManager::loadFromJsonFile(const std::string& filename) {
-    // TODO: Implement JSON parsing (requires JSON library like nlohmann::json)
-    throw std::runtime_error("JSON config loading not yet implemented");
+std::unique_ptr<InferenceConfig> DefaultConfigLoader::LoadFromFile(const std::string& filename) {
+    // TODO: Implement file parsing based on extension
+    throw std::runtime_error("File config loading not yet implemented");
 }
 
-std::unique_ptr<InferenceConfig> ConfigManager::loadFromYamlFile(const std::string& filename) {
-    // TODO: Implement YAML parsing (requires YAML library like yaml-cpp)
-    throw std::runtime_error("YAML config loading not yet implemented");
-}
-
-std::unique_ptr<InferenceConfig> ConfigManager::createDefault() {
+std::unique_ptr<InferenceConfig> DefaultConfigLoader::CreateDefault() {
     return std::make_unique<InferenceConfig>();
 }
 
-void ConfigManager::saveToJsonFile(const InferenceConfig& config, const std::string& filename) {
-    // TODO: Implement JSON saving
-    throw std::runtime_error("JSON config saving not yet implemented");
+std::vector<std::vector<int64_t>> DefaultConfigLoader::ParseInputSizes(const std::string& input) {
+    return vision_infra::utils::InputParser::ParseInputSizes(input);
 }
 
-void ConfigManager::saveToYamlFile(const InferenceConfig& config, const std::string& filename) {
-    // TODO: Implement YAML saving  
-    throw std::runtime_error("YAML config saving not yet implemented");
-}
-
-void ConfigManager::printConfig(const InferenceConfig& config) {
-    std::cout << "Configuration:\n";
-    std::cout << "  Server: " << config.server_address << ":" << config.port << " (" << config.protocol << ")\n";
-    std::cout << "  Model: " << config.model_name << " (" << config.model_type << ")\n";
-    std::cout << "  Source: " << config.source << "\n";
-    std::cout << "  Labels: " << config.labels_file << "\n";
-    std::cout << "  Batch Size: " << config.batch_size << "\n";
-    std::cout << "  Show Frame: " << (config.show_frame ? "true" : "false") << "\n";
-    std::cout << "  Write Frame: " << (config.write_frame ? "true" : "false") << "\n";
-    std::cout << "  Confidence Threshold: " << config.confidence_threshold << "\n";
-    std::cout << "  NMS Threshold: " << config.nms_threshold << "\n";
-    std::cout << "  Verbose: " << (config.verbose ? "true" : "false") << "\n";
-    std::cout << "  Shared Memory Type: " << config.shared_memory_type << "\n";
-    if (config.shared_memory_type == "cuda") {
-        std::cout << "  CUDA Device ID: " << config.cuda_device_id << "\n";
-    }
-    std::cout << "  Log Level: " << config.log_level << "\n";
-    if (!config.log_file.empty()) {
-        std::cout << "  Log File: " << config.log_file << "\n";
-    }
-}
-
-std::unique_ptr<InferenceConfig> ConfigManager::merge(const InferenceConfig& base, const InferenceConfig& override) {
-    auto merged = std::make_unique<InferenceConfig>(base);
-    
-    // Override non-empty values
-    if (!override.server_address.empty()) merged->server_address = override.server_address;
-    if (override.port != 8000) merged->port = override.port;
-    if (!override.protocol.empty()) merged->protocol = override.protocol;
-    if (!override.model_name.empty()) merged->model_name = override.model_name;
-    if (!override.model_type.empty()) merged->model_type = override.model_type;
-    if (!override.source.empty()) merged->source = override.source;
-    if (!override.labels_file.empty()) merged->labels_file = override.labels_file;
-    if (override.batch_size != 1) merged->batch_size = override.batch_size;
-    
-    // For boolean values, always take override
-    merged->show_frame = override.show_frame;
-    merged->write_frame = override.write_frame;
-    merged->verbose = override.verbose;
-    
-    // For thresholds
-    if (override.confidence_threshold != 0.5f) merged->confidence_threshold = override.confidence_threshold;
-    if (override.nms_threshold != 0.4f) merged->nms_threshold = override.nms_threshold;
-    
-    // Merge custom parameters
-    for (const auto& [key, value] : override.custom_params) {
-        merged->setCustomParam(key, value);
-    }
-    
-    return merged;
-}
-
-void ConfigManager::registerLoader(const std::string& extension, ConfigLoader loader) {
-    // TODO: Implement custom loader registration
-    static std::unordered_map<std::string, ConfigLoader> loaders;
-    loaders[extension] = loader;
-}
-
-std::vector<std::vector<int64_t>> ConfigManager::parseInputSizes(const std::string& input) {
-    return vision_infra::utils::InputParser::parseInputSizes(input);
-}
-
-std::string ConfigManager::getEnvVar(const std::string& name, const std::string& default_value) {
+std::string DefaultConfigLoader::GetEnvVar(const std::string& name, const std::string& default_value) {
     const char* value = std::getenv(name.c_str());
     return value ? value : default_value;
 }
 
-void ConfigManager::printUsage() {
+void DefaultConfigLoader::PrintUsage() {
     std::cout << "Usage: program [options]\n";
     std::cout << "Options:\n";
     std::cout << "  -h, --help              Show this help message\n";
@@ -334,6 +261,17 @@ void ConfigManager::printUsage() {
     std::cout << "  -mt, --model_type=TYPE  Model type (yolov5, yolov8, etc.)\n";
     std::cout << "  -m, --model=NAME        Model name on inference server\n";
     // ... add more options
+}
+
+// DefaultConfigValidator implementation
+bool DefaultConfigValidator::Validate(const InferenceConfig& config) {
+    // TODO: Implement validation logic
+    return true;
+}
+
+std::string DefaultConfigValidator::GetValidationErrors(const InferenceConfig& config) {
+    // TODO: Implement validation error reporting
+    return "";
 }
 
 } // namespace config

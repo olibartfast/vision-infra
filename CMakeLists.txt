@@ -91,7 +91,7 @@ include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
 # Install all module targets
-install(TARGETS ${PROJECT_NAME} vision_infra_config vision_infra_core vision_infra_utils
+install(TARGETS ${PROJECT_NAME} vision_infra_config vision_infra_core vision_infra_utils vision_infra_warnings
     EXPORT vision-infra-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

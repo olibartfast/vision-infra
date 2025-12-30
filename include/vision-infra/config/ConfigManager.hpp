@@ -115,7 +115,7 @@ public:
     void RegisterSerializer(const std::string& extension, std::unique_ptr<IConfigSerializer> serializer);
 
     // Static factory methods for convenience
-    static std::unique_ptr<ConfigManager> CreateDefault();
+    static std::unique_ptr<ConfigManager> Create();
 
 private:
     class Impl;
