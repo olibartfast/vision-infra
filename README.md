@@ -44,9 +44,6 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j$(nproc)
 sudo make install
 ```
-if(BUILD_EXAMPLES)
-#     add_subdirectory(examples)
-# endif()
 ### Basic Usage
 
 ```cpp
