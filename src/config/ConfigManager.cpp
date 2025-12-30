@@ -84,6 +84,22 @@ void ConfigManager::PrintConfig(const InferenceConfig& config) const {
     if (!config.GetLogFile().empty()) {
         std::cout << "  Log File: " << config.GetLogFile() << "\n";
     }
+    if (config.GetEnableMultimodal()) {
+        std::cout << "  Multimodal: enabled\n";
+        if (!config.GetTextInput().empty()) {
+            std::cout << "  Text Input: " << config.GetTextInput() << "\n";
+        }
+        if (!config.GetAudioInput().empty()) {
+            std::cout << "  Audio Input: " << config.GetAudioInput() << "\n";
+        }
+        if (!config.GetTextPrompt().empty()) {
+            std::cout << "  Text Prompt: " << config.GetTextPrompt() << "\n";
+        }
+        std::cout << "  Modality Combination: " << config.GetModalityCombination() << "\n";
+        std::cout << "  Weights - Text: " << config.GetTextWeight() 
+                  << ", Image: " << config.GetImageWeight() 
+                  << ", Audio: " << config.GetAudioWeight() << "\n";
+    }
 }
 
 bool ConfigManager::ValidateConfig(const InferenceConfig& config) const {
@@ -115,6 +131,14 @@ std::unique_ptr<InferenceConfig> ConfigManager::Merge(const InferenceConfig& bas
     merged->SetCudaDeviceId(base.GetCudaDeviceId());
     merged->SetLogLevel(base.GetLogLevel());
     merged->SetLogFile(base.GetLogFile());
+    merged->SetEnableMultimodal(base.GetEnableMultimodal());
+    merged->SetTextInput(base.GetTextInput());
+    merged->SetAudioInput(base.GetAudioInput());
+    merged->SetTextPrompt(base.GetTextPrompt());
+    merged->SetModalityCombination(base.GetModalityCombination());
+    merged->SetTextWeight(base.GetTextWeight());
+    merged->SetImageWeight(base.GetImageWeight());
+    merged->SetAudioWeight(base.GetAudioWeight());
     
     // Override with non-default values
     if (!override.GetServerAddress().empty() && override.GetServerAddress() != "localhost") {
@@ -134,6 +158,18 @@ std::unique_ptr<InferenceConfig> ConfigManager::Merge(const InferenceConfig& bas
     merged->SetShowFrame(override.GetShowFrame());
     merged->SetWriteFrame(override.GetWriteFrame());
     merged->SetVerbose(override.GetVerbose());
+    merged->SetEnableMultimodal(override.GetEnableMultimodal());
+    
+    // Override multimodal values if they exist
+    if (!override.GetTextInput().empty()) merged->SetTextInput(override.GetTextInput());
+    if (!override.GetAudioInput().empty()) merged->SetAudioInput(override.GetAudioInput());
+    if (!override.GetTextPrompt().empty()) merged->SetTextPrompt(override.GetTextPrompt());
+    if (!override.GetModalityCombination().empty() && override.GetModalityCombination() != "concat") {
+        merged->SetModalityCombination(override.GetModalityCombination());
+    }
+    if (override.GetTextWeight() != 1.0f) merged->SetTextWeight(override.GetTextWeight());
+    if (override.GetImageWeight() != 1.0f) merged->SetImageWeight(override.GetImageWeight());
+    if (override.GetAudioWeight() != 1.0f) merged->SetAudioWeight(override.GetAudioWeight());
     
     return merged;
 }
@@ -169,7 +205,15 @@ std::unique_ptr<InferenceConfig> DefaultConfigLoader::LoadFromCommandLine(int ar
         "{shared_memory_type smt |none | shared memory type (none, system, cuda)}"
         "{cuda_device_id cdi |0  | CUDA device ID for CUDA shared memory}"
         "{log_level ll   |info  | log level (debug, info, warn, error)}"
-        "{log_file lf    |      | log file path}";
+        "{log_file lf    |      | log file path}"
+        "{enable_multimodal em |false | enable multimodal model support}"
+        "{text_input ti  |      | path to text input file}"
+        "{audio_input ai |      | path to audio input file}"
+        "{text_prompt tp |      | text prompt for multimodal model}"
+        "{modality_combination mc |concat | how to combine modalities (concat, attention, fusion)}"
+        "{text_weight tw |1.0   | weight for text modality}"
+        "{image_weight iw |1.0  | weight for image modality}"
+        "{audio_weight aw |1.0  | weight for audio modality}";
 
     cv::CommandLineParser parser(argc, argv, keys);
     
@@ -196,6 +240,14 @@ std::unique_ptr<InferenceConfig> DefaultConfigLoader::LoadFromCommandLine(int ar
     config->SetCudaDeviceId(parser.get<int>("cuda_device_id"));
     config->SetLogLevel(parser.get<cv::String>("log_level"));
     config->SetLogFile(parser.get<cv::String>("log_file"));
+    config->SetEnableMultimodal(parser.get<bool>("enable_multimodal"));
+    config->SetTextInput(parser.get<cv::String>("text_input"));
+    config->SetAudioInput(parser.get<cv::String>("audio_input"));
+    config->SetTextPrompt(parser.get<cv::String>("text_prompt"));
+    config->SetModalityCombination(parser.get<cv::String>("modality_combination"));
+    config->SetTextWeight(parser.get<float>("text_weight"));
+    config->SetImageWeight(parser.get<float>("image_weight"));
+    config->SetAudioWeight(parser.get<float>("audio_weight"));
 
     // Parse input sizes if provided
     if (parser.has("input_sizes")) {
@@ -226,6 +278,14 @@ std::unique_ptr<InferenceConfig> DefaultConfigLoader::LoadFromEnvironment() {
     config->SetCudaDeviceId(std::stoi(GetEnvVar("INFERENCE_CUDA_DEVICE_ID", "0")));
     config->SetLogLevel(GetEnvVar("INFERENCE_LOG_LEVEL", "info"));
     config->SetLogFile(GetEnvVar("INFERENCE_LOG_FILE", ""));
+    config->SetEnableMultimodal(GetEnvVar("INFERENCE_ENABLE_MULTIMODAL", "false") == "true");
+    config->SetTextInput(GetEnvVar("INFERENCE_TEXT_INPUT", ""));
+    config->SetAudioInput(GetEnvVar("INFERENCE_AUDIO_INPUT", ""));
+    config->SetTextPrompt(GetEnvVar("INFERENCE_TEXT_PROMPT", ""));
+    config->SetModalityCombination(GetEnvVar("INFERENCE_MODALITY_COMBINATION", "concat"));
+    config->SetTextWeight(std::stof(GetEnvVar("INFERENCE_TEXT_WEIGHT", "1.0")));
+    config->SetImageWeight(std::stof(GetEnvVar("INFERENCE_IMAGE_WEIGHT", "1.0")));
+    config->SetAudioWeight(std::stof(GetEnvVar("INFERENCE_AUDIO_WEIGHT", "1.0")));
     
     std::string input_sizes_env = GetEnvVar("INFERENCE_INPUT_SIZES", "");
     if (!input_sizes_env.empty()) {

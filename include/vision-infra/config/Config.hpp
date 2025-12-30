@@ -103,6 +103,31 @@ public:
     virtual bool IsValid() const;
     virtual std::string GetValidationErrors() const;
     
+    // Multimodal configuration getters/setters
+    bool GetEnableMultimodal() const noexcept { return enable_multimodal_; }
+    void SetEnableMultimodal(bool enable) noexcept { enable_multimodal_ = enable; }
+    
+    const std::string& GetTextInput() const noexcept { return text_input_; }
+    void SetTextInput(const std::string& text) { text_input_ = text; }
+    
+    const std::string& GetAudioInput() const noexcept { return audio_input_; }
+    void SetAudioInput(const std::string& audio) { audio_input_ = audio; }
+    
+    const std::string& GetTextPrompt() const noexcept { return text_prompt_; }
+    void SetTextPrompt(const std::string& prompt) { text_prompt_ = prompt; }
+    
+    const std::string& GetModalityCombination() const noexcept { return modality_combination_; }
+    void SetModalityCombination(const std::string& combination) { modality_combination_ = combination; }
+    
+    float GetTextWeight() const noexcept { return text_weight_; }
+    void SetTextWeight(float weight) noexcept { text_weight_ = weight; }
+    
+    float GetImageWeight() const noexcept { return image_weight_; }
+    void SetImageWeight(float weight) noexcept { image_weight_ = weight; }
+    
+    float GetAudioWeight() const noexcept { return audio_weight_; }
+    void SetAudioWeight(float weight) noexcept { audio_weight_ = weight; }
+
     // Helper methods
     bool IsModelNameAPath() const;
 
@@ -144,6 +169,16 @@ private:
     
     // Additional custom parameters
     std::unordered_map<std::string, std::string> custom_params_;
+    
+    // Multimodal configuration
+    bool enable_multimodal_{false};
+    std::string text_input_;
+    std::string audio_input_;
+    std::string text_prompt_;
+    std::string modality_combination_{"concat"}; // concat, attention, fusion
+    float text_weight_{1.0f};
+    float image_weight_{1.0f};
+    float audio_weight_{1.0f};
 };
 
 } // namespace config
