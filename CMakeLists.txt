@@ -63,6 +63,39 @@ endif()
 # Find required packages
 find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs)
 
+# Testing dependencies
+if(BUILD_TESTING)
+    find_package(GTest REQUIRED)
+    
+    # Handle different GTest/GMock target names across versions
+    if(TARGET GTest::gmock)
+        set(GMOCK_TARGET GTest::gmock)
+        set(GMOCK_MAIN_TARGET GTest::gmock_main)
+    elseif(TARGET gmock)
+        set(GMOCK_TARGET gmock)
+        set(GMOCK_MAIN_TARGET gmock_main)
+    else()
+        # Try to find GMock separately
+        find_library(GMOCK_LIBRARY gmock)
+        find_library(GMOCK_MAIN_LIBRARY gmock_main)
+        if(GMOCK_LIBRARY AND GMOCK_MAIN_LIBRARY)
+            add_library(gmock UNKNOWN IMPORTED)
+            set_target_properties(gmock PROPERTIES IMPORTED_LOCATION ${GMOCK_LIBRARY})
+            add_library(gmock_main UNKNOWN IMPORTED)
+            set_target_properties(gmock_main PROPERTIES IMPORTED_LOCATION ${GMOCK_MAIN_LIBRARY})
+            set(GMOCK_TARGET gmock)
+            set(GMOCK_MAIN_TARGET gmock_main)
+        else()
+            message(WARNING "GMock not found. Some tests may not build properly.")
+            set(GMOCK_TARGET "")
+            set(GMOCK_MAIN_TARGET "")
+        endif()
+    endif()
+    
+    include(GoogleTest)
+    enable_testing()
+endif()
+
 # Create modular library structure
 add_subdirectory(src/config)
 add_subdirectory(src/core) 
@@ -130,10 +163,9 @@ install(FILES
 )
 
 # Optional components
-# if(BUILD_TESTING)
-#     enable_testing()
-#     add_subdirectory(tests)
-# endif()
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
 
 # if(BUILD_EXAMPLES)
 #     add_subdirectory(examples)
