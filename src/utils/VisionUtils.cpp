@@ -149,7 +149,7 @@ std::vector<cv::Scalar> DrawingUtils::GenerateRandomColors(size_t count, unsigne
 }
 
 void DrawingUtils::DrawLabel(cv::Mat& image, const std::string& label, float confidence, 
-                            int x, int y, const cv::Scalar& color, int font, double font_scale, int thickness) {
+                            int x, int y, const cv::Scalar& /* color */, int font, double font_scale, int thickness) {
     std::string confidenceStr = std::to_string(confidence).substr(0, 4);
     std::string display_text = label + ": " + confidenceStr;
     
@@ -306,7 +306,7 @@ void PerformanceUtils::Timer::Reset() {
 double PerformanceUtils::Timer::GetElapsedMs() const {
     auto end = is_running_ ? std::chrono::high_resolution_clock::now() : end_time_;
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start_time_);
-    return duration.count() / 1000.0;
+    return static_cast<double>(duration.count()) / 1000.0;
 }
 
 double PerformanceUtils::Timer::GetElapsedSeconds() const {
@@ -315,7 +315,7 @@ double PerformanceUtils::Timer::GetElapsedSeconds() const {
 
 // PerformanceUtils::FPSCounter implementation
 PerformanceUtils::FPSCounter::FPSCounter(size_t window_size) 
-    : window_size_(window_size), timestamps_(window_size) {}
+    : timestamps_(window_size), window_size_(window_size) {}
 
 void PerformanceUtils::FPSCounter::Update() {
     timestamps_[current_index_] = std::chrono::high_resolution_clock::now();
@@ -336,7 +336,7 @@ double PerformanceUtils::FPSCounter::GetCurrentFPS() const {
     auto duration = timestamps_[prev_index] - timestamps_[start_index];
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
     
-    return ms > 0 ? (count - 1) * 1000.0 / ms : 0.0;
+    return ms > 0 ? static_cast<double>(count - 1) * 1000.0 / static_cast<double>(ms) : 0.0;
 }
 
 double PerformanceUtils::FPSCounter::GetAverageFPS() const {
@@ -356,7 +356,7 @@ size_t MemoryUtils::GetImageMemorySize(const cv::Mat& image) {
 size_t MemoryUtils::GetTensorMemorySize(const std::vector<int64_t>& shape, size_t element_size) {
     size_t total_elements = 1;
     for (auto dim : shape) {
-        total_elements *= dim;
+        total_elements *= static_cast<size_t>(dim);
     }
     return total_elements * element_size;
 }

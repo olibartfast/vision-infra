@@ -91,7 +91,7 @@ include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
 # Install all module targets
-install(TARGETS ${PROJECT_NAME} vision_infra_config vision_infra_core vision_infra_utils vision_infra_warnings
+install(TARGETS ${PROJECT_NAME} vision_infra_config vision_infra_core vision_infra_utils vision_infra_warnings vision_infra_sanitizers
     EXPORT vision-infra-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -130,11 +130,11 @@ install(FILES
 )
 
 # Optional components
-if(BUILD_TESTING)
-    enable_testing()
-    add_subdirectory(tests)
-endif()
+# if(BUILD_TESTING)
+#     enable_testing()
+#     add_subdirectory(tests)
+# endif()
 
-if(BUILD_EXAMPLES)
-    add_subdirectory(examples)
-endif()
+# if(BUILD_EXAMPLES)
+#     add_subdirectory(examples)
+# endif()

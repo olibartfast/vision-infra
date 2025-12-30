@@ -235,7 +235,7 @@ std::unique_ptr<InferenceConfig> DefaultConfigLoader::LoadFromEnvironment() {
     return config;
 }
 
-std::unique_ptr<InferenceConfig> DefaultConfigLoader::LoadFromFile(const std::string& filename) {
+std::unique_ptr<InferenceConfig> DefaultConfigLoader::LoadFromFile(const std::string& /* filename */) {
     // TODO: Implement file parsing based on extension
     throw std::runtime_error("File config loading not yet implemented");
 }
@@ -264,12 +264,12 @@ void DefaultConfigLoader::PrintUsage() {
 }
 
 // DefaultConfigValidator implementation
-bool DefaultConfigValidator::Validate(const InferenceConfig& config) {
+bool DefaultConfigValidator::Validate(const InferenceConfig& /* config */) {
     // TODO: Implement validation logic
     return true;
 }
 
-std::string DefaultConfigValidator::GetValidationErrors(const InferenceConfig& config) {
+std::string DefaultConfigValidator::GetValidationErrors(const InferenceConfig& /* config */) {
     // TODO: Implement validation error reporting
     return "";
 }
