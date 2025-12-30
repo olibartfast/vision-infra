@@ -222,15 +222,16 @@ void DemonstrateImageUtilities(const std::filesystem::path& output_dir) {
     auto normalized = ImageUtils::Normalize(float_image, imagenet_mean, imagenet_std);
     
     // Convert back to uint8 for visualization (denormalize)
-    cv::Mat denormalized;
+    std::vector<cv::Mat> channels;
+    cv::split(normalized, channels);
+    
     for (int c = 0; c < 3; ++c) {
-        std::vector<cv::Mat> channels;
-        cv::split(normalized, channels);
-        
         // Reverse normalization: pixel = (normalized * std) + mean
         channels[static_cast<size_t>(c)] = (channels[static_cast<size_t>(c)] * imagenet_std[static_cast<size_t>(c)]) + imagenet_mean[static_cast<size_t>(c)];
-        cv::merge(channels, denormalized);
     }
+    
+    cv::Mat denormalized;
+    cv::merge(channels, denormalized);
     denormalized.convertTo(denormalized, CV_8U, 255.0);
     
     auto normalized_path = output_dir / "04_normalized.jpg";
